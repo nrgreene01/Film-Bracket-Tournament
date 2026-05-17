@@ -585,8 +585,8 @@ body.tabs-ready .tab-panel.active {
 </div>
 
 <script>
-const hostedSubmissionsUrl = "";
-const hostedBackendMode = hostedSubmissionsUrl ? "apps-script" : "local";
+// CONFIGURATION: Add your Google Apps Script webhook URL here
+const GOOGLE_SHEETS_WEBHOOK_URL = "";
 
 const bracketData = [
     {
@@ -604,7 +604,7 @@ const bracketData = [
             {seed:10,title:"Barry Lyndon",year:1975,poster:"https://m.media-amazon.com/images/M/MV5BNmM2MGQ5Y2UtYzA3ZC00ZDJlLTkwNDYtMjBmZGExZDJiN2RlXkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:11,title:"Sing Street",year:2016,poster:"https://m.media-amazon.com/images/M/MV5BMjEzODA3MDcxMl5BMl5BanBnXkFtZTgwODgxNDk3NzE@._V1_.jpg",source:"personal"},
             {seed:12,title:"City of God",year:2002,poster:"posters/city-of-god.jpg",source:"consensus"},
-            {seed:13,title:"Almost Famous",year:2000,poster:"https://m.media-amazon.com/images/M/MV5BZGFmNDQzOTItOGZkNS00NjFkLWE4MjQtNmRjMjNlMjg3YzdiXkEyXkFqcGc@._V1_.jpg",source:"personal"},
+            {seed:13,title:"Almost Famous",year:2000,poster:"https://m.media-amazon.com/images/M/MV5BZGFmNDQzOTItOGZkNS00NjFkLWE0MjQtNmRjMjNlMjg3YzdiXkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:14,title:"12 Angry Men",year:1957,poster:"posters/12-angry-men.jpg",source:"consensus"},
             {seed:15,title:"Aftersun",year:2022,poster:"https://m.media-amazon.com/images/M/MV5BZWU5Y2MyZjQtNGVjYi00ZDRkLTk1MGYtYmNlMzI0MTFmNDU2XkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:16,title:"The Holdovers",year:2023,poster:"https://m.media-amazon.com/images/M/MV5BOWY3MjUzZTctOTI5ZC00MDA5LTk4ZTMtZWJjNjRmMzE4ZmI2XkEyXkFqcGc@._V1_.jpg",source:"personal"}
@@ -667,7 +667,7 @@ const bracketData = [
             {seed:10,title:"Uncut Gems",year:2019,poster:"https://m.media-amazon.com/images/M/MV5BNmI0YjA5NjItYzExYi00NzkxLTkxNDctNGJjYTZhM2M0NDQ0XkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:11,title:"Blue Velvet",year:1986,poster:"https://m.media-amazon.com/images/M/MV5BNzkwZGUyYjQtM2QyOC00MTBjLWE0NGYtMTZmOGM5MjI0Mzg0XkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:12,title:"Do the Right Thing",year:1989,poster:"posters/do-the-right-thing.jpg",source:"consensus"},
-            {seed:13,title:"Incendies",year:2010,poster:"https://m.media-amazon.com/images/M/MV5BYWFmMjdmNjctNzhhOC00ZmMzLTkwOGItMmVmZDU4MjE2MTYwXkEyXkFqcGc@._V1_.jpg",source:"personal"},
+            {seed:13,title:"Incendies",year:2010,poster:"https://m.media-amazon.com/images/M/MV5BYWFmMjdmNjctNzhhOC00ZmMzLTkwOGItMmVmZDU0MjE2MTYwXkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:14,title:"Barbie",year:2023,poster:"https://m.media-amazon.com/images/M/MV5BYjI3NDU0ZGYtYjA2YS00Y2RlLTgwZDAtYTE2YTM5ZjE1M2JlXkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:15,title:"Double Indemnity",year:1944,poster:"https://m.media-amazon.com/images/M/MV5BM2YwNjZlZDktNTlmNS00ODQwLWJmNmUtYmE1NTBhYjc1YTY5XkEyXkFqcGc@._V1_.jpg",source:"personal"},
             {seed:16,title:"Call Me by Your Name",year:2017,poster:"https://m.media-amazon.com/images/M/MV5BNDk3NTEwNjc0MV5BMl5BanBnXkFtZTgwNzYxNTMwMzI@._V1_.jpg",source:"personal"}
@@ -899,14 +899,6 @@ function getSavedName() {
     }
 }
 
-function getSubmissionsUrl() {
-    return hostedSubmissionsUrl || "/api/submissions";
-}
-
-function isHostedBackend() {
-    return hostedBackendMode === "apps-script" && Boolean(hostedSubmissionsUrl);
-}
-
 function sameMovie(movie, selectedTitle) {
     return Boolean(movie && selectedTitle && movie.title === selectedTitle);
 }
@@ -998,422 +990,217 @@ function pickOptionMarkup(movie, selectedTitle, dataAttributes, emptyLabel) {
 }
 
 function buildPickMatchup(regionIndex, roundIndex, matchupIndex) {
-    const selectedTitle = pickState.regions[regionIndex].rounds[roundIndex][matchupIndex];
     const competitors = getRegionCompetitors(regionIndex, roundIndex, matchupIndex);
-    const dataAttributes = `data-pick-kind="region" data-region-index="${regionIndex}" data-round-index="${roundIndex}" data-matchup-index="${matchupIndex}"`;
+    const selectedTitle = pickState.regions[regionIndex].rounds[roundIndex][matchupIndex];
+    const attrs1 = `data-region="${regionIndex}" data-round="${roundIndex}" data-matchup="${matchupIndex}" data-competitor="0"`;
+    const attrs2 = `data-region="${regionIndex}" data-round="${roundIndex}" data-matchup="${matchupIndex}" data-competitor="1"`;
+
     return `
-        <div class="matchup pick-matchup">
-            ${pickOptionMarkup(competitors[0], selectedTitle, dataAttributes, "TBD")}
-            ${pickOptionMarkup(competitors[1], selectedTitle, dataAttributes, "TBD")}
+        <div class="pick-matchup">
+            ${pickOptionMarkup(competitors[0], selectedTitle, attrs1, "TBD")}
+            ${pickOptionMarkup(competitors[1], selectedTitle, attrs2, "TBD")}
         </div>
     `;
 }
 
 function buildPickRegion(region, regionIndex) {
-    const roundLabels = ["Round of 64", "Round of 32", "Sweet 16", "Elite 8"];
-    const roundCounts = [8,4,2,1];
-    const rounds = roundLabels.map((label, roundIndex) => {
-        const matchups = Array.from({length:roundCounts[roundIndex]}, (_, matchupIndex) =>
-            buildPickMatchup(regionIndex, roundIndex, matchupIndex)
-        ).join("");
-        return `
-            <div class="round round-${roundIndex + 1}">
-                <div class="round-title">${label}</div>
-                ${matchups}
-            </div>
-        `;
-    }).join("");
+    const firstRound = firstRoundPairings.map((_, matchupIndex) => buildPickMatchup(regionIndex, 0, matchupIndex)).join("");
+    const roundTwo = [0,1,2,3].map((matchupIndex) => buildPickMatchup(regionIndex, 1, matchupIndex)).join("");
+    const roundThree = [0,1].map((matchupIndex) => buildPickMatchup(regionIndex, 2, matchupIndex)).join("");
+    const roundFour = buildPickMatchup(regionIndex, 3, 0);
 
     return `
-        <section class="region-bracket pick-region" aria-label="${escapeHtml(region.name)} selections">
+        <section class="region-bracket" aria-label="${escapeHtml(region.name)} bracket picks">
             <h3>${escapeHtml(region.name)}</h3>
             <div class="region-bracket-scroll">
                 <div class="rounds">
-                    ${rounds}
+                    <div class="round round-1">
+                        <div class="round-title">Round of 64</div>
+                        ${firstRound}
+                    </div>
+                    <div class="round round-2">
+                        <div class="round-title">Round of 32</div>
+                        ${roundTwo}
+                    </div>
+                    <div class="round round-3">
+                        <div class="round-title">Sweet 16</div>
+                        ${roundThree}
+                    </div>
+                    <div class="round round-4">
+                        <div class="round-title">Elite 8</div>
+                        ${roundFour}
+                    </div>
                 </div>
             </div>
         </section>
     `;
 }
 
-function buildFinalPickMatchup(roundIndex, matchupIndex, label) {
-    const selectedTitle = roundIndex === 0
-        ? pickState.finalFour.semis[matchupIndex]
-        : pickState.finalFour.champion;
-    const competitors = getFinalCompetitors(roundIndex, matchupIndex);
-    const dataAttributes = `data-pick-kind="final" data-round-index="${roundIndex}" data-matchup-index="${matchupIndex}"`;
-    return `
-        <div>
-            <div class="round-title">${escapeHtml(label)}</div>
-            <div class="matchup pick-matchup">
-                ${pickOptionMarkup(competitors[0], selectedTitle, dataAttributes, "TBD")}
-                ${pickOptionMarkup(competitors[1], selectedTitle, dataAttributes, "TBD")}
-            </div>
-        </div>
-    `;
-}
-
-function buildPickFinalFour() {
-    const champion = movieFromTitle(pickState.finalFour.champion);
-    return `
-        <div class="pick-final-column">
-            ${buildFinalPickMatchup(0, 0, `${bracketData[0].name.replace(" Region","")} vs ${bracketData[1].name.replace(" Region","")}`)}
-            ${buildFinalPickMatchup(0, 1, `${bracketData[2].name.replace(" Region","")} vs ${bracketData[3].name.replace(" Region","")}`)}
-        </div>
-        <div class="pick-final-column">
-            ${buildFinalPickMatchup(1, 0, "Championship")}
-        </div>
-        <div class="pick-final-column">
-            <div class="round-title">Champion</div>
-            <div class="champion-display">
-                <span>Winner</span>
-                <strong>${champion ? escapeHtml(champion.title) : "TBD"}</strong>
-            </div>
-        </div>
-    `;
-}
-
 function renderPicksBracket() {
-    document.getElementById("picksBracket").innerHTML = bracketData.map(buildPickRegion).join("");
+    document.getElementById("picksBracket").innerHTML = bracketData.map((region, idx) => buildPickRegion(region, idx)).join("");
     document.getElementById("picksFinalFour").innerHTML = buildPickFinalFour();
 }
 
-function getCompletionCount() {
-    const regionPicks = pickState.regions.reduce((total, regionState) =>
-        total + regionState.rounds.flat().filter(Boolean).length, 0);
-    const finalFourPicks = pickState.finalFour.semis.filter(Boolean).length;
-    return regionPicks + finalFourPicks + (pickState.finalFour.champion ? 1 : 0);
-}
+function buildPickFinalFour() {
+    const finalCompLeft = getFinalCompetitors(0, 0);
+    const finalCompRight = getFinalCompetitors(0, 1);
+    const selectedSemi1 = pickState.finalFour.semis[0];
+    const selectedSemi2 = pickState.finalFour.semis[1];
+    const selectedChampion = pickState.finalFour.champion;
 
-function getFinalFourTitles() {
-    return [
-        pickState.regions[0].rounds[3][0],
-        pickState.regions[1].rounds[3][0],
-        pickState.regions[2].rounds[3][0],
-        pickState.regions[3].rounds[3][0]
-    ].filter(Boolean);
-}
-
-function buildSubmissionPayload(name) {
-    return {
-        participantName:name,
-        champion:pickState.finalFour.champion,
-        finalFour:getFinalFourTitles(),
-        completion:getCompletionCount(),
-        totalRequiredPicks:63,
-        picks:pickState
-    };
-}
-
-function setSubmitStatus(message) {
-    document.getElementById("submitStatus").textContent = message;
-}
-
-function setResultsStatus(message) {
-    document.getElementById("resultsStatus").textContent = message;
-}
-
-function serverHelpMessage() {
-    if (isHostedBackend()) {
-        return "Check the Apps Script web app URL and deployment permissions.";
-    }
-    return "Start the local server first: powershell -ExecutionPolicy Bypass -File .\\server.ps1";
-}
-
-function normalizeSubmissions(payload) {
-    if (Array.isArray(payload)) {
-        return payload;
-    }
-    if (Array.isArray(payload?.submissions)) {
-        return payload.submissions;
-    }
-    return [];
-}
-
-function jsonpRequest(url, params = {}) {
-    return new Promise((resolve, reject) => {
-        const callbackName = `movieBracketJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const requestUrl = new URL(url, window.location.href);
-        Object.entries(params).forEach(([key,value]) => requestUrl.searchParams.set(key, value));
-        requestUrl.searchParams.set("callback", callbackName);
-
-        const script = document.createElement("script");
-        const timeout = window.setTimeout(() => {
-            cleanup();
-            reject(new Error("Results request timed out."));
-        }, 10000);
-
-        function cleanup() {
-            window.clearTimeout(timeout);
-            delete window[callbackName];
-            script.remove();
-        }
-
-        window[callbackName] = (data) => {
-            cleanup();
-            resolve(data);
-        };
-        script.onerror = () => {
-            cleanup();
-            reject(new Error("Could not load results."));
-        };
-        script.src = requestUrl.toString();
-        document.body.appendChild(script);
-    });
-}
-
-async function postToSubmissionsApi(payload) {
-    if (isHostedBackend()) {
-        await fetch(getSubmissionsUrl(), {
-            method:"POST",
-            mode:"no-cors",
-            headers:{"Content-Type":"text/plain;charset=utf-8"},
-            body:JSON.stringify(payload)
-        });
-        return {ok:true};
-    }
-
-    const response = await fetch(getSubmissionsUrl(), {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload)
-    });
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Submission failed.");
-    }
-    return response.json();
-}
-
-async function submitPicks() {
-    const nameInput = document.getElementById("participantName");
-    const name = nameInput.value.trim();
-    if (!name) {
-        setSubmitStatus("Enter a name before submitting.");
-        nameInput.focus();
-        return;
-    }
-    if (!pickState.finalFour.champion) {
-        setSubmitStatus("Pick a champion before submitting.");
-        return;
-    }
-
-    setSavedName(name);
-    setSubmitStatus("Submitting...");
-    try {
-        await postToSubmissionsApi({
-            action:"submit",
-            ...buildSubmissionPayload(name)
-        });
-        setSubmitStatus("Submitted. You can view it on the Results tab.");
-        if (isHostedBackend()) {
-            window.setTimeout(loadResults, 900);
-        } else {
-            await loadResults();
-        }
-    } catch (error) {
-        setSubmitStatus(`${error.message} ${serverHelpMessage()}`);
-    }
-}
-
-function formatSubmittedAt(value) {
-    if (!value) {
-        return "";
-    }
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-    return date.toLocaleString();
-}
-
-function renderChampionCounts(submissions) {
-    const counts = new Map();
-    submissions.forEach((submission) => {
-        if (!submission.champion) {
-            return;
-        }
-        counts.set(submission.champion, (counts.get(submission.champion) || 0) + 1);
-    });
-
-    const rows = Array.from(counts.entries())
-        .sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-
-    if (!rows.length) {
-        document.getElementById("championCounts").innerHTML = '<p class="empty-results">No champion picks yet.</p>';
-        return;
-    }
-
-    document.getElementById("championCounts").innerHTML = rows.map(([title,count]) => `
-        <div class="champion-row">
-            <span>${escapeHtml(title)}</span>
-            <span class="champion-count">${count}</span>
+    return `
+        <div class="pick-final-column">
+            <div class="pick-matchup">
+                ${pickOptionMarkup(finalCompLeft[0], selectedSemi1, 'data-final-semi="0" data-competitor="0"', "TBD")}
+                ${pickOptionMarkup(finalCompLeft[1], selectedSemi1, 'data-final-semi="0" data-competitor="1"', "TBD")}
+            </div>
         </div>
-    `).join("");
-}
-
-function renderSubmissionsTable(submissions) {
-    if (!submissions.length) {
-        document.getElementById("submissionsTable").innerHTML = '<p class="empty-results">No submissions yet.</p>';
-        return;
-    }
-
-    const rows = submissions
-        .slice()
-        .sort((a,b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0))
-        .map((submission) => `
-            <tr>
-                <td>${escapeHtml(submission.participantName || "")}</td>
-                <td>${escapeHtml(submission.champion || "TBD")}</td>
-                <td>${escapeHtml((submission.finalFour || []).join(", ") || "TBD")}</td>
-                <td>${escapeHtml(String(submission.completion || 0))}/63</td>
-                <td>${escapeHtml(formatSubmittedAt(submission.submittedAt))}</td>
-            </tr>
-        `).join("");
-
-    document.getElementById("submissionsTable").innerHTML = `
-        <table class="results-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Champion</th>
-                    <th>Final Four</th>
-                    <th>Picks</th>
-                    <th>Submitted</th>
-                </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-        </table>
+        <div class="pick-final-column">
+            <div class="pick-matchup">
+                ${pickOptionMarkup(finalCompRight[0], selectedSemi2, 'data-final-semi="1" data-competitor="0"', "TBD")}
+                ${pickOptionMarkup(finalCompRight[1], selectedSemi2, 'data-final-semi="1" data-competitor="1"', "TBD")}
+            </div>
+        </div>
+        <div class="pick-final-column">
+            <div class="champion-display">
+                <span>Championship Pick</span>
+                <strong>${selectedChampion ? escapeHtml(selectedChampion) : "Select a winner"}</strong>
+            </div>
+            <div class="pick-matchup">
+                ${pickOptionMarkup(movieFromTitle(selectedSemi1), selectedChampion, 'data-championship="true" data-competitor="0"', "TBD")}
+                ${pickOptionMarkup(movieFromTitle(selectedSemi2), selectedChampion, 'data-championship="true" data-competitor="1"', "TBD")}
+            </div>
+        </div>
     `;
 }
 
-async function loadResults() {
-    setResultsStatus("Loading...");
+function attachPickListeners() {
+    document.addEventListener("click", (e) => {
+        const pickOption = e.target.closest(".pick-option");
+        if (!pickOption) return;
+
+        const region = pickOption.dataset.region;
+        const round = pickOption.dataset.round;
+        const matchup = pickOption.dataset.matchup;
+        const title = pickOption.dataset.title;
+        const finalSemi = pickOption.dataset.finalSemi;
+        const isChampionship = pickOption.dataset.championship;
+
+        if (isChampionship) {
+            pickState.finalFour.champion = title;
+            renderPicksBracket();
+        } else if (finalSemi !== undefined) {
+            pickState.finalFour.semis[parseInt(finalSemi)] = title;
+            validateFinalFourPicks();
+            renderPicksBracket();
+        } else {
+            pickState.regions[parseInt(region)].rounds[parseInt(round)][parseInt(matchup)] = title;
+            validateRegionPicks(parseInt(region));
+            renderPicksBracket();
+        }
+
+        savePickState();
+    });
+}
+
+async function submitBracket() {
+    const name = document.getElementById("participantName").value.trim();
+    const statusEl = document.getElementById("submitStatus");
+
+    if (!name) {
+        statusEl.textContent = "Please enter your name";
+        return;
+    }
+
+    if (!GOOGLE_SHEETS_WEBHOOK_URL) {
+        statusEl.textContent = "⚠️ Webhook URL not configured";
+        return;
+    }
+
+    const submitButton = document.getElementById("submitPicksButton");
+    submitButton.disabled = true;
+    statusEl.textContent = "Submitting...";
+
     try {
-        const payload = isHostedBackend()
-            ? await jsonpRequest(getSubmissionsUrl(), {action:"list"})
-            : await fetch(getSubmissionsUrl()).then(async (response) => {
-                if (!response.ok) {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(error.error || "Could not load results.");
-                }
-                return response.json();
-            });
-        const submissions = normalizeSubmissions(payload);
-        renderChampionCounts(submissions);
-        renderSubmissionsTable(submissions);
-        setResultsStatus(`${submissions.length} submission${submissions.length === 1 ? "" : "s"} loaded.`);
+        const payload = {
+            timestamp: new Date().toISOString(),
+            participantName: name,
+            champion: pickState.finalFour.champion || "No selection",
+            bracketData: JSON.stringify(pickState)
+        };
+
+        const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        statusEl.textContent = "✓ Bracket submitted successfully!";
+        setSavedName(name);
+        setTimeout(() => {
+            statusEl.textContent = "";
+            submitButton.disabled = false;
+        }, 3000);
     } catch (error) {
-        renderChampionCounts([]);
-        renderSubmissionsTable([]);
-        setResultsStatus(`${error.message} ${serverHelpMessage()}`);
+        console.error("Submission error:", error);
+        statusEl.textContent = "✗ Error submitting bracket";
+        submitButton.disabled = false;
     }
 }
 
-async function clearResults() {
-    if (!confirm("Clear all submitted bracket picks?")) {
-        return;
+function resetBracket() {
+    if (confirm("Reset all picks? This cannot be undone.")) {
+        pickState = createEmptyPickState();
+        savePickState();
+        renderPicksBracket();
     }
-    setResultsStatus("Clearing...");
-    try {
-        if (isHostedBackend()) {
-            const adminKey = prompt("Enter the Apps Script admin key to clear results.");
-            if (!adminKey) {
-                setResultsStatus("Clear cancelled.");
-                return;
+}
+
+function renderOverviewBracket() {
+    document.getElementById("overviewBracket").innerHTML = bracketData.map((region) => buildRegion(region)).join("");
+    document.getElementById("finalFourBracket").innerHTML = buildFinalFour();
+}
+
+function initTabs() {
+    const buttons = document.querySelectorAll(".tab-button");
+    const panels = document.querySelectorAll(".tab-panel");
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const tabId = button.getAttribute("data-tab");
+            buttons.forEach((b) => b.classList.remove("active"));
+            panels.forEach((p) => p.classList.remove("active"));
+            button.classList.add("active");
+            document.getElementById(tabId).classList.add("active");
+
+            if (tabId === "picksTab") {
+                renderPicksBracket();
             }
-            await postToSubmissionsApi({action:"clear", adminKey});
-            window.setTimeout(loadResults, 900);
-            return;
-        }
-        const response = await fetch(getSubmissionsUrl(), {method:"DELETE"});
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({}));
-            throw new Error(error.error || "Could not clear results.");
-        }
-        await loadResults();
-    } catch (error) {
-        setResultsStatus(`${error.message} ${serverHelpMessage()}`);
-    }
-}
-
-function selectRegionPick(button) {
-    const regionIndex = Number(button.dataset.regionIndex);
-    const roundIndex = Number(button.dataset.roundIndex);
-    const matchupIndex = Number(button.dataset.matchupIndex);
-    pickState.regions[regionIndex].rounds[roundIndex][matchupIndex] = button.dataset.title;
-    validateRegionPicks(regionIndex);
-    validateFinalFourPicks();
-    savePickState();
-    renderPicksBracket();
-}
-
-function selectFinalPick(button) {
-    const roundIndex = Number(button.dataset.roundIndex);
-    const matchupIndex = Number(button.dataset.matchupIndex);
-    if (roundIndex === 0) {
-        pickState.finalFour.semis[matchupIndex] = button.dataset.title;
-    } else {
-        pickState.finalFour.champion = button.dataset.title;
-    }
-    validateFinalFourPicks();
-    savePickState();
-    renderPicksBracket();
-}
-
-bracketData.forEach((_, regionIndex) => validateRegionPicks(regionIndex));
-validateFinalFourPicks();
-
-renderCatalog();
-document.getElementById("overviewBracket").innerHTML = bracketData.map(buildRegion).join("");
-document.getElementById("finalFourBracket").innerHTML = buildFinalFour();
-renderPicksBracket();
-
-document.getElementById("picksTab").addEventListener("click", (event) => {
-    const button = event.target.closest(".pick-option");
-    if (!button || button.disabled) {
-        return;
-    }
-    if (button.dataset.pickKind === "region") {
-        selectRegionPick(button);
-    }
-    if (button.dataset.pickKind === "final") {
-        selectFinalPick(button);
-    }
-});
-
-document.getElementById("resetPicksButton").addEventListener("click", () => {
-    pickState = createEmptyPickState();
-    savePickState();
-    renderPicksBracket();
-});
-
-document.getElementById("submitPicksButton").addEventListener("click", submitPicks);
-document.getElementById("refreshResultsButton").addEventListener("click", loadResults);
-document.getElementById("clearResultsButton").addEventListener("click", clearResults);
-document.getElementById("participantName").value = getSavedName();
-
-function showTab(tabId) {
-    document.querySelectorAll(".tab-button").forEach((tabButton) => {
-        const isActive = tabButton.dataset.tab === tabId;
-        tabButton.classList.toggle("active", isActive);
-        tabButton.setAttribute("aria-selected", String(isActive));
+        });
     });
-    document.querySelectorAll(".tab-panel").forEach((panel) => {
-        panel.classList.toggle("active", panel.id === tabId);
-    });
-    if (tabId === "resultsTab") {
-        loadResults();
+
+    document.body.classList.add("tabs-ready");
+}
+
+function init() {
+    renderCatalog();
+    renderOverviewBracket();
+    initTabs();
+    attachPickListeners();
+
+    document.getElementById("submitPicksButton").addEventListener("click", submitBracket);
+    document.getElementById("resetPicksButton").addEventListener("click", resetBracket);
+
+    const savedName = getSavedName();
+    if (savedName) {
+        document.getElementById("participantName").value = savedName;
     }
 }
 
-document.querySelectorAll(".tab-button").forEach((button) => {
-    button.addEventListener("click", () => showTab(button.dataset.tab));
-});
-
-showTab("catalogTab");
-document.body.classList.add("tabs-ready");
+init();
 </script>
-
 </body>
 </html>
